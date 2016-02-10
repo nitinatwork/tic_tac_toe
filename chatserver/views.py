@@ -102,7 +102,7 @@ class GameList(TemplateView):
         if game.exists():
             return HttpResponseRedirect('/gameroom/' + game[0].name + "/")
         context = RequestContext(request)
-        games = TicTacGameSession.objects.filter(state='open')
+        games = TicTacGameSession.objects.filter(state__in=['open', 'playing'])
         variables = {'games': games}
         print variables
         # return super(GameList, self).get(request, *args, **kwargs)
