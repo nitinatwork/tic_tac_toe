@@ -1,0 +1,81 @@
+{% extends "chat_base.html" %}
+
+{% block "title" %}using subscribe-broadcast{% endblock %}
+
+{% block introduction %}
+<p>Point a second browser onto this URL and check for message synchronization.</p>
+{% endblock introduction %}
+
+{% block main_content %}
+
+<div class="row">
+	<div "form-inline">
+		<div class="form-group col-xs-12 col-sm-7">
+			<input class="form-control" type="text" id="text_message" placeholder="Enter Room Name"/>
+		</div>
+		<div class="form-group col-xs-12 col-sm-5 col-md-4">
+			{% block control_panel %}
+			<button class="btn btn-primary" id="create_game">Create Room</button>
+			{% endblock control_panel %}
+		</div>
+	</div>
+</div>
+
+<div class="col-md-12">
+{% for game in games %}
+	<div class="col-md-4">
+		<center>
+			<h3>
+				<a href="/gameroom/{{game.name}}/">{{game.name}}</a>
+			</h3>
+		</center>
+	</div>
+	{%endfor%}
+
+</div>
+{% endblock %}
+
+{% block script_panel %}
+<script type="text/javascript">
+	jQuery(document).ready(function($) {
+		// var ws4redis = WS4Redis({
+		// 	uri: '{{ WEBSOCKET_URI }}foobar?subscribe-broadcast&publish-broadcast&echo',
+		// 	receive_message: receiveMessage,
+		// 	heartbeat_msg: {{ WS4REDIS_HEARTBEAT }}
+		// });
+		// var billboard = $('#billboard');
+
+	// send message though the Websocket to the server
+	// $("#text_message").keydown(function(event) {
+	// 	if (event.keyCode === 13) {
+	// 		event.preventDefault();
+	// 		ws4redis.send_message($('#text_message').val());
+	// 	}
+	// });
+
+	$('#create_game').click(function() {
+		// ws4redis.send_message($('#text_message').val());
+		sendMessage();
+	});
+
+
+	// send message to the server using Ajax
+	function sendMessage() {
+		$.post('{% url "room_list" %}', {
+			// group: $('#').val(),
+			name: $('#text_message').val(),
+			'csrfmiddlewaretoken': '{{ csrf_token }}'
+		}).done(function(data){
+			// alert(data);
+			window.location.href = data;
+		});
+	}
+
+	// receive a message though the Websocket from the server
+	function receiveMessage(msg) {
+		billboard.append('<br/>' + msg);
+		billboard.scrollTop(billboard.scrollTop() + 25);
+	}
+});
+</script>
+{% endblock %}
