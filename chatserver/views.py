@@ -47,6 +47,7 @@ class TicTacGame(TemplateView):
             redis_publisher = RedisPublisher(facility='foobar', users=[game.user])
             message = RedisMessage("start")
             redis_publisher.publish_message(message)
+            redis_publisher.publish_message(RedisMessage(""))
 
             variables['my_turn'] = False
             variables['joined'] = True
@@ -58,6 +59,7 @@ class TicTacGame(TemplateView):
             variables['my_turn'] = False
             variables['joined'] = True
         variables['first_player'] = game.user == request.user
+        variables['game_name'] = game_name
         # variables['second_player']
         print variables
         return render_to_response('tictac.html', variables, context_instance=context)
@@ -68,9 +70,10 @@ class SendMove(TemplateView):
     def post(self, request, *args, **kwargs):
         index = request.POST.get("index", None)
         state = request.POST.get("state", None)
+        game_name = request.POST.get("game_name", None)
         user = request.user
         print "==============", user, index, state
-        game = TicTacGameSession.objects.filter(Q(user=user) | Q(user2=user))[0]
+        game = TicTacGameSession.objects.filter(Q(user=user) | Q(user2=user)).filter(name=game_name)[0]
         game.state = state
         game.save()
 

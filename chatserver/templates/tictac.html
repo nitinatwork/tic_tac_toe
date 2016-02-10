@@ -137,9 +137,14 @@ $(document).ready(function() {
 	function sendMessage(index, state) {
 		$.post('{% url "send_move" %}', {
 			'index': index,
+			'game_name': '{{game_name}}',
 			'state': state,
 			'csrfmiddlewaretoken': '{{ csrf_token }}',
 			// message: $('#text_message').val()
+		}).done(function(data){
+			if(data != "Ok"){
+				alert("error");
+			}
 		});
 	}
 
@@ -211,7 +216,7 @@ $(document).ready(function() {
 		if(completed){
 			state = 'over';
 		}
-		moves.push($(self).attr('id'));
+		// moves.push($(self).attr('id'));
 		if(my_turn){
 			sendMessage($(self).attr('id'), state);
 		}
