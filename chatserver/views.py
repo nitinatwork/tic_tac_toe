@@ -16,6 +16,104 @@ from chatserver.models import *
 from django.http import HttpResponseRedirect
 from django.db.models import Q
 from django.core.cache import cache
+from django import forms
+from django.shortcuts import render
+
+import requests
+
+
+
+
+
+
+xml = '''<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+ <soap:Body>
+ <UploadStudentAttendance xmlns="https://tempuri.org/">
+ <UserName>dasaipokhra</UserName>
+ <Password>12345</Password>
+ <Studentid>885595</Studentid>
+ <Punchdate>2016-02-20</Punchdate>
+ <Punchtime>10:59:00</Punchtime>
+ <Courseid>1424</Courseid>
+ <Batchid>32895</Batchid>
+ <Tcid>8474</Tcid>
+ <Field1></Field1>
+ <Field2></Field2>
+ </UploadStudentAttendance>
+ </soap:Body>
+</soap:Envelope>'''
+
+target_url =  'http://isds-textiles.in/webcon/list.asmx?WSDL'
+
+import csv
+
+class UploadFileForm(forms.Form):
+    username = forms.CharField(max_length=50)
+    password = forms.CharField(max_length=50)
+    batchid = forms.CharField(max_length=50)
+    courseid = forms.CharField(max_length=50)
+    tcid = forms.CharField(max_length=50)
+    file = forms.FileField()
+
+class ISDSView(TemplateView):
+    
+    def get(self, request, *args, **kwargs):
+        form = UploadFileForm()
+        return render(request, 'isds.html', {'form': form})
+
+    def post(self, request, *args, **kwargs):
+        form = UploadFileForm(request.POST, request.FILES)
+        success = False
+        print "******", request.FILES
+        if form.is_valid():
+            self.handle_uploaded_file(request.FILES['file'])
+            success = True
+            print "--------"
+            students_list = self.read_csv()
+            for i in range(1, len(students_list)):
+                xml = '''<?xml version="1.0" encoding="utf-8"?>
+                <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+                xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+                xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+                 <soap:Body>
+                 <UploadStudentAttendance xmlns="https://tempuri.org/">
+                 <UserName>''' + form.cleaned_data.get('username') + '''</UserName>
+                 <Password>''' + form.cleaned_data.get('password') + '''</Password>
+                 <Studentid>'''+ students_list[i][0]+'''</Studentid>
+                 <Punchdate>'''+ students_list[i][1]+'''</Punchdate>
+                 <Punchtime>'''+ students_list[i][2]+'''</Punchtime>
+                 <Courseid>''' + form.cleaned_data.get('courseid') + '''</Courseid>
+                 <Batchid>''' + form.cleaned_data.get('batchid') + '''</Batchid>
+                 <Tcid>''' + form.cleaned_data.get('tcid') + '''</Tcid>
+                 <Field1></Field1>
+                 <Field2></Field2>
+                 </UploadStudentAttendance>
+                 </soap:Body>
+                </soap:Envelope>'''
+                headers = {'Content-Type': 'text/xml','charset':'utf-8'}
+                r = requests.post(target_url,data=xml,headers=headers, auth=('dasaipokhra','12345'))
+                # print 'r.text = ', r.text
+                print 'r.content = ', r.content
+                print 'r.status_code = ', r.status_code
+        return render(request, 'isds.html', {'form': form, 'success': success})
+        
+
+    def handle_uploaded_file(self, f):
+        with open('isds.txt', 'wb+') as destination:
+            for chunk in f.chunks():
+                destination.write(chunk)
+
+    def read_csv(self):
+        # your_list = 
+        with open('isds.txt', 'rb') as f:
+            reader = csv.reader(f)
+            your_list = list(reader)
+        return your_list
+
+
 
 class BroadcastChatView(TemplateView):
     template_name = 'broadcast_chat.html'

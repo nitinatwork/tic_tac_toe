@@ -5,11 +5,12 @@ from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.views.generic import RedirectView
 from django.contrib import admin
 from django.contrib.auth.decorators import login_required
-from .views import BroadcastChatView, TicTacGame, GameList, SendMove, Register
+from .views import BroadcastChatView, TicTacGame, GameList, SendMove, Register, ISDSView
 admin.autodiscover()
 
 
 urlpatterns = patterns('',
+	url(r'^isds/$', ISDSView.as_view(), name='isds'),
     url(r'^chat/$', BroadcastChatView.as_view(), name='broadcast_chat'),
     url(r'^room_list/$', GameList.as_view(), name='room_list'),
     url(r'^gameroom/(?P<game_name>[-\w]+)/$', TicTacGame.as_view(), name='game_room'),
